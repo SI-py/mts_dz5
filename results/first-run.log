@@ -1,0 +1,7 @@
+OK: 3 targets, 2 datasources, 4 dashboards, 25 queries
+OK: hot reload 6714c321b871, annotation, same container
+OK: replay does not duplicate a database row
+OK: high-fraud firing
+OK: stream-stopped firing
+OK: alerts recovered
+{"checked_at": "2026-11-11T11:37:35Z", "targets": 3, "dashboards": 4, "queries": 25, "hot_reload": "6714c321b871", "deduplication": true, "alerts_tested": true, "database_rows": 2443}

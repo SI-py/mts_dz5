@@ -1,0 +1,340 @@
+{
+  "uid": "business",
+  "title": "Бизнес",
+  "schemaVersion": 41,
+  "version": 1,
+  "tags": [
+    "mts-dz5"
+  ],
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Плотность скоров",
+      "type": "barchart",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "rawSql": "WITH filtered AS (\n SELECT least(floor(score * 20)::int, 19) AS bin FROM scores WHERE $__timeFilter(scored_at) AND us_state IN (${us_state:sqlstring}) AND merch IN (${merch:sqlstring})\n), counts AS (\n SELECT bin, count(*) AS n FROM filtered GROUP BY bin\n)\nSELECT to_char(b / 20.0, 'FM0.00') AS \"Скор\",\n coalesce(n, 0)::float8 / greatest((SELECT count(*) FROM filtered), 1) / 0.05 AS \"Плотность\"\nFROM generate_series(0, 19) AS b LEFT JOIN counts ON counts.bin = b ORDER BY b",
+          "format": "table",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "showValue": "auto",
+        "xTickLabelRotation": -45,
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "barRadius": 0,
+        "barWidth": 0.9,
+        "groupWidth": 0.7,
+        "stacking": "none",
+        "xTickLabelSpacing": 0,
+        "xField": "Скор",
+        "fullHighlight": false
+      },
+      "description": "Нормированная гистограмма: count / (N × 0.05), площадь равна 1. Штат и мерчант применяются вместе."
+    },
+    {
+      "id": 2,
+      "title": "TPS по выбранным транзакциям",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "rawSql": "SELECT $__timeGroupAlias(scored_at, '10s', 0), count(*) / 10.0 AS \"TPS\"\nFROM scores WHERE $__timeFilter(scored_at) AND us_state IN (${us_state:sqlstring}) AND merch IN (${merch:sqlstring}) GROUP BY 1 ORDER BY 1",
+          "format": "time_series",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "description": "Число обработанных транзакций за 10 секунд / 10. Неполный крайний интервал ещё заполняется."
+    },
+    {
+      "id": 3,
+      "title": "Фрод по категориям: последние 1000",
+      "type": "barchart",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "rawSql": "WITH recent AS (SELECT cat_id, fraud_flag FROM scores ORDER BY id DESC LIMIT 1000)\nSELECT cat_id, avg(fraud_flag)::float8 AS \"Доля фрода\" FROM recent GROUP BY cat_id ORDER BY 2 DESC",
+          "format": "table",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "xTickLabelRotation": 0,
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "barRadius": 0,
+        "barWidth": 0.9,
+        "groupWidth": 0.7,
+        "stacking": "none",
+        "xTickLabelSpacing": 0,
+        "xField": "cat_id",
+        "fullHighlight": false
+      },
+      "description": "Последние 1000 записей всей таблицы, независимо от фильтров и периода. Фрод — решение модели."
+    },
+    {
+      "id": 4,
+      "title": "Оборот и сумма под риском",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "postgres"
+          },
+          "rawSql": "SELECT $__timeGroupAlias(scored_at, '30s', 0),\n coalesce(sum(amount) FILTER (WHERE fraud_flag = 1), 0)::float8 AS \"Сумма под риском\",\n sum(amount)::float8 AS \"Оборот\"\nFROM scores WHERE $__timeFilter(scored_at) AND us_state IN (${us_state:sqlstring}) AND merch IN (${merch:sqlstring}) GROUP BY 1 ORDER BY 1",
+          "format": "time_series",
+          "editorMode": "code",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 10
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "description": "Сумма транзакций с fraud_flag=1 и общий оборот за 30 секунд. Это потенциальный риск, не подтверждённый ущерб."
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "us_state",
+        "label": "Штат",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "postgres"
+        },
+        "query": "SELECT DISTINCT us_state FROM scores ORDER BY 1",
+        "definition": "SELECT DISTINCT us_state FROM scores ORDER BY 1",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      },
+      {
+        "name": "merch",
+        "label": "Мерчант",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "postgres"
+        },
+        "query": "SELECT DISTINCT merch FROM scores WHERE us_state IN (${us_state:sqlstring}) ORDER BY 1",
+        "definition": "SELECT DISTINCT merch FROM scores WHERE us_state IN (${us_state:sqlstring}) ORDER BY 1",
+        "refresh": 1,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": []
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "type": "dashboards",
+      "title": "Fraud",
+      "tags": [
+        "mts-dz5"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ]
+}

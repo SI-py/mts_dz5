@@ -1,0 +1,16 @@
+{"version": "89006a73103c", "file": "89006a73103c.cbm", "trained_at": "2026-11-11T11:42:52.973385+00:00"}
+test_broken_model_keeps_previous (test_pipeline.ModelTests.test_broken_model_keeps_previous) ... model=89006a73103c
+ok
+test_hot_reload (test_pipeline.ModelTests.test_hot_reload) ... model=89006a73103c
+{"version": "3b1156bca37c", "file": "3b1156bca37c.cbm", "trained_at": "2026-11-11T11:42:53.075562+00:00"}
+model=3b1156bca37c
+ok
+test_score_contract (test_pipeline.ModelTests.test_score_contract) ... model=89006a73103c
+ok
+test_unchanged_model (test_pipeline.ModelTests.test_unchanged_model) ... model=89006a73103c
+ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.285s
+
+OK

@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-11-11T11:44:45Z",
+  "targets": 3,
+  "dashboards": 4,
+  "queries": 25,
+  "hot_reload": "59a883fd6b71",
+  "deduplication": true,
+  "alerts_tested": true,
+  "database_rows": 1540
+}
